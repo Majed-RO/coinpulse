@@ -1,5 +1,5 @@
 import { fetcher } from '@/lib/coingecko.actions';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { TrendingDown, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -63,8 +63,7 @@ const TrendingCoins = async () => {
 					return <span>N/A</span>;
 				}
 
-				const isTrendingUp =
-					 changeValue > 0;
+				const isTrendingUp = changeValue > 0;
 
 				return (
 					<div
@@ -75,7 +74,12 @@ const TrendingCoins = async () => {
 								: 'text-red-500'
 						)}
 					>
-						<p>
+						<p className="flex items-center space-x-1">
+							<span>
+								{formatCurrency(
+									changeValue
+								)}
+							</span>
 							{isTrendingUp ? (
 								<TrendingUp
 									size={
@@ -88,10 +92,7 @@ const TrendingCoins = async () => {
 										16
 									}
 								/>
-							)}{' '}
-							{Math.abs(
-								changeValue
-							).toFixed(2)}
+							)}
 							%
 						</p>
 					</div>
