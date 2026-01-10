@@ -38,16 +38,33 @@ const TrendingCoins = async () => {
 		{
 			header: 'Price',
 			cellClassName: 'price-cell',
-			cell: coin => <span>${coin.item.data.price.toFixed(2)}</span>
+
+			cell: coin => (
+				<span>
+					$
+					{coin.item.data?.price?.toFixed(2) ??
+						'N/A'}
+				</span>
+			)
 		},
 		{
 			header: '24h Change',
 			cellClassName: 'name-cell',
 			cell: coin => {
 				const item = coin.item;
+
+				const changeValue =
+					item.data?.price_change_percentage_24h
+						?.usd;
+				if (
+					changeValue === undefined ||
+					changeValue === null
+				) {
+					return <span>N/A</span>;
+				}
+
 				const isTrendingUp =
-					item.data.price_change_percentage_24h
-						.usd > 0;
+					 changeValue > 0;
 
 				return (
 					<div
@@ -73,9 +90,7 @@ const TrendingCoins = async () => {
 								/>
 							)}{' '}
 							{Math.abs(
-								item.data
-									.price_change_percentage_24h
-									.usd
+								changeValue
 							).toFixed(2)}
 							%
 						</p>
@@ -91,15 +106,15 @@ const TrendingCoins = async () => {
 	];
 
 	return (
-		<div id='trending-coins'>
+		<div id="trending-coins">
 			<h4>Trending Coins</h4>
 			<DataTable
 				columns={columns}
 				data={trendingCoins.coins.slice(0, 5) || []}
 				rowKey={coin => coin.item.id}
 				tableClassName="trending-coins-table"
-        headerCellClassName='py-3!'
-        bodyCellClassName='py-2!'
+				headerCellClassName="py-3!"
+				bodyCellClassName="py-2!"
 			/>
 		</div>
 	);

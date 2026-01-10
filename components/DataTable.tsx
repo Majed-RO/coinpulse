@@ -32,7 +32,8 @@ const DataTable = <T,>({
 						<TableHead
 							key={index}
 							className={cn(
-								'bg-dark-400 text-purple-100 py-4 first pl-5 last:pr-5', headerCellClassName
+								'bg-dark-400 text-purple-100 py-4 first:pl-5 last:pr-5',
+								headerCellClassName
 							)}
 						>
 							{column.header}
@@ -41,7 +42,7 @@ const DataTable = <T,>({
 				</TableRow>
 			</TableHeader>
 			<TableBody>
-        {/* iterate over trending coins */}
+				{/* iterate over trending coins */}
 				{data.map((row, rowIndex) => (
 					<TableRow
 						key={rowKey(row, rowIndex)}

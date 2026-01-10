@@ -11,7 +11,7 @@ const CoinOverview = async () => {
 			fetcher<CoinDetailsData>('/coins/bitcoin', {
 				dex_pair_format: 'symbol' // will return the short name of the coin as btc
 			}),
-			fetcher<OHLCData>('/coins/bitcoin/ohlc', {
+			fetcher<OHLCData[]>('/coins/bitcoin/ohlc', {
 				vs_currency: 'usd',
 				days: 1,
 				// interval: 'hourly',

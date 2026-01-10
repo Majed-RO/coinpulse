@@ -29,7 +29,7 @@ const CandlestickChart = ({
 		null
 	); // // "I am making a Series, and specifically, it's the Candlestick version."
 
-	const [loading, isLoading] = useState(false);
+	const [loading, setLoading] = useState(false);
 	const [period, setPeriod] = useState(initialPeriod);
 	// The ?? operator triggers the fallback only for nullish values (null or undefined). It treats 0, false, and "" as valid data and will keep them.
 	const [ohlcData, setOhlcData] = useState<OHLCData[]>(data ?? []);
@@ -37,7 +37,7 @@ const CandlestickChart = ({
 	const [isPending, startTransition] = useTransition();
 
 	const fetchOHLCData = async (selectedPeriod: Period) => {
-		isLoading(true);
+		setLoading(true);
 		try {
 			const { days, interval } =
 				PERIOD_CONFIG[selectedPeriod];
@@ -58,10 +58,11 @@ const CandlestickChart = ({
 				params
 			);
 			setOhlcData(newData ?? []);
-			isLoading(false);
+			setLoading(false);
 			// return newData;
 		} catch (error) {
 			console.log('Failed to fetch OHLCData', error);
+      setLoading(false);
 		}
 	};
 
@@ -116,7 +117,7 @@ const CandlestickChart = ({
 			chartRef.current = null;
 			candlestickSeriesRef.current = null;
 		};
-	}, [height]);
+	}, [height, period]);
 
 	useEffect(() => {
 		if (!candlestickSeriesRef.current) return;
