@@ -8,7 +8,7 @@ import {
 	PaginationNext,
 	PaginationPrevious
 } from '@/components/ui/pagination';
-import { buildPageNumbers, cn } from '@/lib/utils';
+import { buildPageNumbers, cn, ELLIPSIS } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
 const CoinsPagination = ({
@@ -48,7 +48,7 @@ const CoinsPagination = ({
 					{pageNumbers.map((pageNum, index) => (
 						<PaginationItem key={index}>
 							{pageNum ===
-							'ellipsis' ? (
+							ELLIPSIS ? (
 								<PaginationEllipsis />
 							) : (
 								<PaginationLink

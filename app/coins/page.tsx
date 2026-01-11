@@ -11,14 +11,20 @@ const Coins = async ({ searchParams }: NextPageProps) => {
 	const currentPage = Number(page) || 1;
 	const perPage = 10;
 
-	const coinsData = await fetcher<CoinMarketData[]>('/coins/markets', {
-		vs_currency: 'usd',
-		order: 'market_cap_desc',
-		sparkline: 'false',
-		price_change_percentage: '24h',
-		per_page: perPage,
-		page: currentPage
-	});
+	let coinsData: CoinMarketData[] = [];
+	try {
+		coinsData = await fetcher<CoinMarketData[]>('/coins/markets', {
+			vs_currency: 'usd',
+			order: 'market_cap_desc',
+			sparkline: 'false',
+			price_change_percentage: '24h',
+			per_page: perPage,
+			page: currentPage
+		});
+	} catch (error) {
+		// Consider rendering an error state or using notFound()
+		console.error('Failed to fetch coins data:', error);
+	}
 
 	const columns: DataTableColumn<CoinMarketData>[] = [
 		{
@@ -26,11 +32,13 @@ const Coins = async ({ searchParams }: NextPageProps) => {
 			cellClassName: 'rank-cell',
 			cell: coin => (
 				<>
-					#{coin.market_cap_rank}
 					<Link
 						href={`/coins/${coin.id}`}
 						aria-label="View coin"
-					/>
+            className='rank-cell'
+					>
+						#{coin.market_cap_rank}
+					</Link>
 				</>
 			)
 		},
@@ -61,8 +69,9 @@ const Coins = async ({ searchParams }: NextPageProps) => {
 			header: '24h Change',
 			cellClassName: 'change-cell',
 			cell: coin => {
+        const change = coin.price_change_percentage_24h ?? 0;
 				const isTrendingUp =
-					coin.price_change_percentage_24h > 0;
+					change > 0;
 
 				return (
 					<span
@@ -75,7 +84,7 @@ const Coins = async ({ searchParams }: NextPageProps) => {
 					>
 						{isTrendingUp && '+'}
 						{formatPercentage(
-							coin.price_change_percentage_24h
+							change
 						)}
 					</span>
 				);
