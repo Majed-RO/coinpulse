@@ -1,80 +1,80 @@
 'use client';
 
-import { fetcher } from '@/lib/coingecko.actions';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import {
 	getCandlestickConfig,
 	getChartConfig,
+	LIVE_INTERVAL_BUTTONS,
 	PERIOD_BUTTONS,
 	PERIOD_CONFIG
 } from '@/lib/constants';
-import { convertOHLCData } from '@/lib/utils';
 import {
 	CandlestickSeries,
 	createChart,
 	IChartApi,
-	ISeriesApi
+	ISeriesApi,
+  OhlcData
 } from 'lightweight-charts';
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { fetcher } from '@/lib/coingecko.actions';
+import { convertOHLCData } from '@/lib/utils';
 
 const CandlestickChart = ({
 	children,
 	data,
 	coinId,
 	height = 360,
-	initialPeriod = 'daily'
+	initialPeriod = 'daily',
+	liveOhlcv = null,
+	mode = 'historical',
+	liveInterval,
+	setLiveInterval
 }: CandlestickChartProps) => {
-	const chartContainerRef = useRef<HTMLDivElement>(null);
-	const chartRef = useRef<IChartApi>(null);
-	const candlestickSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(
-		null
-	); // // "I am making a Series, and specifically, it's the Candlestick version."
+	const chartContainerRef = useRef<HTMLDivElement | null>(null);
+	const chartRef = useRef<IChartApi | null>(null);
+	const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
 
-	const [loading, setLoading] = useState(false);
+	const prevOhlcDataLength = useRef<number>(data?.length || 0);
+
 	const [period, setPeriod] = useState(initialPeriod);
-	// The ?? operator triggers the fallback only for nullish values (null or undefined). It treats 0, false, and "" as valid data and will keep them.
 	const [ohlcData, setOhlcData] = useState<OHLCData[]>(data ?? []);
-
 	const [isPending, startTransition] = useTransition();
 
+	// console.log('DATA', data);
+	// console.log('liveOhlcv', liveOhlcv);
+
 	const fetchOHLCData = async (selectedPeriod: Period) => {
-		setLoading(true);
 		try {
 			const { days, interval } =
 				PERIOD_CONFIG[selectedPeriod];
 
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const params: Record<string, any> = {
-				vs_currency: 'usd',
-				days,
-				precision: 'full'
-			};
-
-			if (interval) {
-				params.interval = interval;
-			}
-
 			const newData = await fetcher<OHLCData[]>(
 				`/coins/${coinId}/ohlc`,
-				params
+				{
+					vs_currency: 'usd',
+					days,
+					interval,
+					precision: 'full'
+				}
 			);
-			setOhlcData(newData ?? []);
-			setLoading(false);
-			// return newData;
-		} catch (error) {
-			console.log('Failed to fetch OHLCData', error);
-      setLoading(false);
+
+			startTransition(() => {
+				setOhlcData(newData ?? []);
+			});
+		} catch (e) {
+			console.error('Failed to fetch OHLCData', e);
 		}
 	};
 
 	const handlePeriodChange = (newPeriod: Period) => {
-		// Implement period change logic here
 		if (newPeriod === period) return;
 
-		startTransition(async () => {
-			setPeriod(newPeriod);
-			await fetchOHLCData(newPeriod);
-		});
+		setPeriod(newPeriod);
+		fetchOHLCData(newPeriod);
 	};
+
+	const normalizeTimestamp = (t: number) =>
+		// if timestamp looks like milliseconds (>= 1e11), convert to seconds
+		t > 1e11 ? Math.floor(t / 1000) : Math.floor(t);
 
 	useEffect(() => {
 		const container = chartContainerRef.current;
@@ -84,62 +84,125 @@ const CandlestickChart = ({
 			period
 		);
 
-		// Create chart
 		const chart = createChart(container, {
 			...getChartConfig(height, showTime),
 			width: container.clientWidth
 		});
-
 		const series = chart.addSeries(
 			CandlestickSeries,
 			getCandlestickConfig()
 		);
 
-		series.setData(convertOHLCData(ohlcData));
+		const convertedToSeconds = ohlcData.map(
+			item =>
+				[
+					normalizeTimestamp(item[0]),
+					item[1],
+					item[2],
+					item[3],
+					item[4]
+				] as OHLCData
+		);
+
+		series.setData(convertOHLCData(convertedToSeconds));
 		chart.timeScale().fitContent();
 
 		chartRef.current = chart;
-		candlestickSeriesRef.current = series;
+		candleSeriesRef.current = series;
 
 		const observer = new ResizeObserver(entries => {
-			if (!entries || entries.length === 0) return;
-
+			if (!entries.length) return;
 			chart.applyOptions({
 				width: entries[0].contentRect.width
 			});
 		});
-
 		observer.observe(container);
 
 		return () => {
-			chart.remove();
 			observer.disconnect();
+			chart.remove();
 			chartRef.current = null;
-			candlestickSeriesRef.current = null;
+			candleSeriesRef.current = null;
 		};
 	}, [height, period]);
 
-	useEffect(() => {
-		if (!candlestickSeriesRef.current) return;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const getCleanOHLC = (data: any): OhlcData[] => {
+		// 1. Safety check: If it's not an array or it's empty, return empty
+		if (!Array.isArray(data) || data.length === 0) return [];
 
-		const convertedToSeconds = ohlcData.map(
-			d =>
+		// 2. Logic: If the FIRST element is an array AND that element's FIRST element
+		// is ALSO an array, we are too deep.
+		// We want to stop when data[0] is the candle [timestamp, open, ...]
+		if (Array.isArray(data[0]) && Array.isArray(data[0][0])) {
+			return getCleanOHLC(data[0]); // Dig deeper
+		}
+
+		return data; // This is the final 2D array [[t,o,h,l,c], ...]
+	};
+
+	/// useeffect2
+	useEffect(() => {
+		if (!candleSeriesRef.current) return;
+
+		const CleanedCandlesData = getCleanOHLC(ohlcData);
+
+		const convertedToSeconds = CleanedCandlesData.map(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(item: any) =>
 				[
-					Math.floor(d[0] / 1000),
-					d[1],
-					d[2],
-					d[3],
-					d[4]
+					normalizeTimestamp(item[0]),
+					item[1],
+					item[2],
+					item[3],
+					item[4]
 				] as OHLCData
 		);
 
-		const converted = convertOHLCData(convertedToSeconds);
+		let merged: OHLCData[];
 
-		candlestickSeriesRef.current.setData(converted);
-		if (chartRef.current) {
-			chartRef.current.timeScale().fitContent();
+		if (liveOhlcv) {
+			// console.log('liveOhlcv has data:', liveOhlcv);
+
+			const liveTimestamp = liveOhlcv[0];
+
+			const lastHistoricalCandle =
+				convertedToSeconds[
+					convertedToSeconds.length - 1
+				];
+
+			if (
+				lastHistoricalCandle &&
+				lastHistoricalCandle[0] === liveTimestamp
+			) {
+				merged = [
+					...convertedToSeconds.slice(0, -1),
+					liveOhlcv
+				];
+			} else {
+				merged = [...convertedToSeconds, liveOhlcv];
+			}
+		} else {
+			merged = convertedToSeconds;
 		}
-	}, [ohlcData, period]);
+
+		merged.sort((a, b) => a[0] - b[0]);
+
+		const converted = convertOHLCData(merged);
+		candleSeriesRef.current.setData(converted);
+
+		const dataChanged =
+			prevOhlcDataLength.current !==
+			CleanedCandlesData.length;
+
+		if (dataChanged || mode === 'historical') {
+			chartRef.current?.timeScale().fitContent();
+			prevOhlcDataLength.current = CleanedCandlesData.length;
+		}
+	}, [ohlcData, period, liveOhlcv, mode]);
+
+	// console.log('ohlcData mmmm', ohlcData);
+	// console.log('ohlcDataLive mmmm', liveOhlcv);
 
 	return (
 		<div id="candlestick-chart">
@@ -166,7 +229,7 @@ const CandlestickChart = ({
 									)
 								}
 								disabled={
-									loading
+									isPending
 								}
 							>
 								{label}
@@ -174,13 +237,53 @@ const CandlestickChart = ({
 						)
 					)}
 				</div>
+
+				{liveInterval && (
+					<div className="button-group">
+						<span className="text-sm mx-2 font-medium text-purple-100/50">
+							Update Frequency:
+						</span>
+						{LIVE_INTERVAL_BUTTONS.map(
+							({
+								value,
+								label
+							}: {
+								value: Interval;
+								label: string;
+							}) => (
+								<button
+									key={
+										value
+									}
+									className={
+										liveInterval ===
+										value
+											? 'config-button-active'
+											: 'config-button'
+									}
+									onClick={() =>
+										setLiveInterval &&
+										setLiveInterval(
+											value
+										)
+									}
+									disabled={
+										isPending
+									}
+								>
+									{label}
+								</button>
+							)
+						)}
+					</div>
+				)}
 			</div>
-			{/* chart */}
+
 			<div
 				ref={chartContainerRef}
 				className="chart"
-				style={{ height: height }}
-			></div>
+				style={{ height }}
+			/>
 		</div>
 	);
 };

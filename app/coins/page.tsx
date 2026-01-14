@@ -30,23 +30,17 @@ const Coins = async ({ searchParams }: NextPageProps) => {
 		{
 			header: 'Rank',
 			cellClassName: 'rank-cell',
-			cell: coin => (
-				<>
-					<Link
-						href={`/coins/${coin.id}`}
-						aria-label="View coin"
-            className='rank-cell'
-					>
-						#{coin.market_cap_rank}
-					</Link>
-				</>
-			)
+			cell: coin => <>#{coin.market_cap_rank}</>
 		},
 		{
 			header: 'Token',
 			cellClassName: 'token-cell',
 			cell: coin => (
-				<div className="token-info">
+				<Link
+					href={`/coins/${coin.id}`}
+					aria-label="View coin"
+					className="token-info"
+				>
 					<Image
 						src={coin.image}
 						alt={coin.name}
@@ -57,7 +51,7 @@ const Coins = async ({ searchParams }: NextPageProps) => {
 						{coin.name} (
 						{coin.symbol.toUpperCase()})
 					</p>
-				</div>
+				</Link>
 			)
 		},
 		{
@@ -69,9 +63,9 @@ const Coins = async ({ searchParams }: NextPageProps) => {
 			header: '24h Change',
 			cellClassName: 'change-cell',
 			cell: coin => {
-        const change = coin.price_change_percentage_24h ?? 0;
-				const isTrendingUp =
-					change > 0;
+				const change =
+					coin.price_change_percentage_24h ?? 0;
+				const isTrendingUp = change > 0;
 
 				return (
 					<span
@@ -83,9 +77,7 @@ const Coins = async ({ searchParams }: NextPageProps) => {
 						})}
 					>
 						{isTrendingUp && '+'}
-						{formatPercentage(
-							change
-						)}
+						{formatPercentage(change)}
 					</span>
 				);
 			}

@@ -5,6 +5,8 @@ interface NextPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+type Interval = '1s' | '1m' | 'day' | 'hour' | 'minute' | 'second';
+
 interface CandlestickChartProps {
   data?: OHLCData[];
   liveOhlcv?: OHLCData | null;
@@ -13,8 +15,8 @@ interface CandlestickChartProps {
   children?: React.ReactNode;
   mode?: 'historical' | 'live';
   initialPeriod?: Period;
-  liveInterval?: '1s' | '1m';
-  setLiveInterval?: (interval: '1s' | '1m') => void;
+  liveInterval?: Interval;
+  setLiveInterval?: (interval: Interval) => void;
 }
 
 interface ConverterProps {
@@ -224,7 +226,7 @@ interface CoinDetailsData {
 
 interface LiveDataProps {
   coinId: string;
-  poolId: string;
+  poolId?: string;
   coin: CoinDetailsData;
   coinOHLCData?: OHLCData[];
   children?: React.ReactNode;
@@ -258,6 +260,20 @@ interface UseCoinGeckoWebSocketReturn {
   trades: Trade[];
   ohlcv: OHLCData | null;
   isConnected: boolean;
+}
+
+interface UseCoinGeckoWebRestApiProps {
+  coinId: string;
+  poolId: string;
+  liveInterval?: '1s' | '1m';
+}
+
+interface UseCoinGeckoWebRestApiReturn {
+  price: ExtendedPriceData | null;
+  trades: Trade[];
+  ohlcv: OHLCData | null;
+  isConnected: boolean;
+  refetch: () => void;
 }
 
 interface DataTableColumn<T> {
