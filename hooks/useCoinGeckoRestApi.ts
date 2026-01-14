@@ -29,7 +29,7 @@ const NETWORK_MAP: Record<string, string> = {
 	'arbitrum-one': 'arbitrum'
 };
 
-export const useCoinGeckoPolling = ({
+export const useCoinGeckoRestApi = ({
 	coinId,
 	interval
 }: {
@@ -147,10 +147,12 @@ export const useCoinGeckoPolling = ({
 					);
 
 					// On-chain OHLCV list is usually under attributes.ohlcv_list
-					setOhlcv(
-						ohlcvRes.data.attributes
-							.ohlcv_list[0]
-					);
+					const ohlcvList =
+						ohlcvRes?.data?.attributes
+							?.ohlcv_list;
+					if (ohlcvList?.length > 0) {
+						setOhlcv(ohlcvList[0]);
+					}
 				}
 			} else {
 				// NATIVE FALLBACK: Use standard OHLC endpoint instead of mocking from market_chart

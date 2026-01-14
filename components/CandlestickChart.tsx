@@ -12,7 +12,8 @@ import {
 	CandlestickSeries,
 	createChart,
 	IChartApi,
-	ISeriesApi
+	ISeriesApi,
+  OhlcData
 } from 'lightweight-charts';
 import { fetcher } from '@/lib/coingecko.actions';
 import { convertOHLCData } from '@/lib/utils';
@@ -126,7 +127,7 @@ const CandlestickChart = ({
 	}, [height, period]);
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const getCleanOHLC = (data: any): any[] => {
+	const getCleanOHLC = (data: any): OhlcData[] => {
 		// 1. Safety check: If it's not an array or it's empty, return empty
 		if (!Array.isArray(data) || data.length === 0) return [];
 
@@ -144,7 +145,6 @@ const CandlestickChart = ({
 	useEffect(() => {
 		if (!candleSeriesRef.current) return;
 
-    // TODO I got inconsistent ohlcData, somtimes it will be 3d array, know where is the issue
 		const CleanedCandlesData = getCleanOHLC(ohlcData);
 
 		const convertedToSeconds = CleanedCandlesData.map(

@@ -6,7 +6,7 @@ import {
 	CommandDialog,
 	CommandEmpty,
 	CommandInput,
-	CommandItem,
+	// CommandItem,
 	CommandList
 	// CommandShortcut
 } from '@/components/ui/command';
@@ -109,9 +109,13 @@ const CommandDialogModal = () => {
 					>
 						<p className="flex items-center space-x-1">
 							<span>
-								{formatCurrency(
+								{/* {formatCurrency(
 									changeValue
+								)} */}
+								{changeValue.toFixed(
+									2
 								)}
+								%
 							</span>
 							{isTrendingUp ? (
 								<TrendingUp
@@ -126,7 +130,6 @@ const CommandDialogModal = () => {
 									}
 								/>
 							)}
-							%
 						</p>
 					</div>
 				);
@@ -137,16 +140,16 @@ const CommandDialogModal = () => {
 	const searchResultsData: TrendingCoin[] = (searchResults ?? []).map(
 		coin => ({
 			item: {
-				id: coin.id!,
-				name: coin.name!,
-				symbol: coin.symbol!,
+				id: coin.id,
+				name: coin.name,
+				symbol: coin.symbol,
 				market_cap_rank: 1,
-				thumb: coin.thumb!,
-				large: coin.image!,
+				thumb: coin.thumb,
+				large: coin.image ?? coin.thumb,
 				data: {
-					price: coin.current_price!,
+					price: coin.current_price ?? 0,
 					price_change_percentage_24h: {
-						usd: coin.price_change_percentage_24h!
+						usd: coin.price_change_percentage_24h ?? 0
 					}
 				}
 			}

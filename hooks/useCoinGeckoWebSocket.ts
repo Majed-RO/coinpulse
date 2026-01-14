@@ -10,7 +10,7 @@ export const useCoinGeckoWebSocket = ({
 	liveInterval
 }: UseCoinGeckoWebSocketProps): UseCoinGeckoWebSocketReturn => {
 	const wsRef = useRef<WebSocket | null>(null);
-	const subscribed = useRef(<Set<string>>new Set());
+  const subscribed = useRef(new Set<string>());
 
 	const [price, setPrice] = useState<ExtendedPriceData | null>(null);
 	const [trades, setTrades] = useState<Trade[]>([]);

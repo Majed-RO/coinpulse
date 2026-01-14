@@ -154,7 +154,7 @@ export function convertOHLCData(data: OHLCData[]) {
 		.map(normalizeRow)
 		.filter(
 			(item, index, arr) =>
-				// drop rows with invalid numeric OHLC values
+      // drop duplicate timestamps (keep first occurrence)
 				index === 0 || item.time !== arr[index - 1].time
 		)
 		.filter(

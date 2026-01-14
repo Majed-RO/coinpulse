@@ -20,13 +20,13 @@ const Page = async ({ params }: NextPageProps) => {
 		})
 	]);
 
-	const platform = coinData.asset_platform_id
+	/* const platform = coinData.asset_platform_id
 		? coinData.detail_platforms?.[coinData.asset_platform_id]
 		: null;
 	const network = platform?.geckoterminal_url.split('/')[3] || null;
 	const contractAddress = platform?.contract_address || null;
 
-	const pool = await getPools(id, network, contractAddress);
+	const pool = await getPools(id, network, contractAddress); */
 
 	const coinDetails = [
 		{
@@ -70,7 +70,7 @@ const Page = async ({ params }: NextPageProps) => {
 			<section className="primary">
 				<LiveDataWrapper
 					coinId={id}
-					poolId={pool.id}
+					// poolId={pool.id}
 					coin={coinData}
 					coinOHLCData={[coinOHLCData]}
 				>

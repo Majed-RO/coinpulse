@@ -6,13 +6,13 @@ import DataTable from '@/components/DataTable';
 import { formatCurrency, timeAgo } from '@/lib/utils';
 import { useState } from 'react';
 import CoinHeader from './CoinHeader';
-import { useCoinGeckoPolling } from '@/hooks/useCoinGeckoRestApi';
+import { useCoinGeckoRestApi } from '@/hooks/useCoinGeckoRestApi';
 // import CoinHeader from '@/components/CoinHeader';
 
 const LiveDataWrapper = ({
-	children,
+	// children,
 	coinId,
-	poolId,
+	// poolId,
 	coin,
 	coinOHLCData
 }: LiveDataProps) => {
@@ -20,7 +20,7 @@ const LiveDataWrapper = ({
 	// const { trades, ohlcv, price } = useCoinGeckoWebSocket({ coinId, poolId, liveInterval });
 
 	const [liveInterval, setLiveInterval] = useState<Interval>('minute');
-	const { trades, ohlcv, price } = useCoinGeckoPolling({
+	const { trades, ohlcv, price } = useCoinGeckoRestApi({
 		coinId,
 		interval: liveInterval
 	});
@@ -66,9 +66,7 @@ const LiveDataWrapper = ({
 		}
 	];
 
-  // console.log('PRICE', price);
-  // console.log('TRADES', trades);
-  // console.log('LIVEDATAWRAPPER OHLCV', ohlcv);
+
 
 	return (
 		<section id="live-data-wrapper">
