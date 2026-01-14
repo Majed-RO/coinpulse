@@ -75,17 +75,94 @@ export function timeAgo(date: string | number | Date): string {
 }
 
 export function convertOHLCData(data: OHLCData[]) {
+	// Normalize incoming OHLC rows to the shape the chart expects:
+	// { time: number|string, open: number, high: number, low: number, close: number }
+	const toNumber = (v: unknown): number => {
+		if (v === null || v === undefined) return NaN;
+		if (typeof v === 'number') return v;
+		if (typeof v === 'string') {
+			// handle formatted strings like "1,234.56"
+			const normalized = (v as string).replace(/,/g, '');
+			return Number(normalized);
+		}
+		if (v instanceof Date) return v.getTime();
+		if (typeof v === 'object') {
+			const obj = v as Record<string, unknown>;
+			if ('value' in obj && typeof obj['value'] === 'number')
+				return obj['value'] as number;
+			if ('v' in obj && typeof obj['v'] === 'number')
+				return obj['v'] as number;
+			const maybePrimitive = (
+				obj as unknown as { valueOf?: () => unknown }
+			).valueOf?.();
+			if (typeof maybePrimitive === 'number')
+				return maybePrimitive;
+			return Number(String(v));
+		}
+		return NaN;
+	};
+
+	const normalizeRow = (d: OHLCData) => {
+		let t: unknown, o: unknown, h: unknown, l: unknown, c: unknown;
+
+		if (Array.isArray(d)) {
+			[t, o, h, l, c] = d as unknown[];
+		} else {
+			// support object-like rows
+			// common keys: time, t, timestamp
+			// open/high/low/close or o/h/l/c
+			// also fallback to numeric indexes
+			const row = d as Record<string, unknown>;
+			t = row.time ?? row.t ?? row.timestamp ?? row[0];
+			o = row.open ?? row.o ?? row[1];
+			h = row.high ?? row.h ?? row[2];
+			l = row.low ?? row.l ?? row[3];
+			c = row.close ?? row.c ?? row[4];
+		}
+
+		// Normalize time: convert ms -> seconds when appropriate
+		let time: Time | string;
+		if (typeof t === 'number') {
+			// if timestamp in ms (greater than ~1e11) convert to seconds
+			time = (t > 1e11
+				? Math.floor(t / 1000)
+				: Math.floor(t)) as unknown as Time;
+		} else if (typeof t === 'string') {
+			time = t;
+		} else if (t instanceof Date) {
+			time = Math.floor(
+				t.getTime() / 1000
+			) as unknown as Time;
+		} else {
+			// fallback: try to coerce
+			const maybe = toNumber(t);
+			time = Number.isFinite(maybe)
+				? (Math.floor(maybe) as unknown as Time)
+				: (t as unknown as Time);
+		}
+
+		return {
+			time,
+			open: toNumber(o),
+			high: toNumber(h),
+			low: toNumber(l),
+			close: toNumber(c)
+		};
+	};
+
 	return data
-		.map(d => ({
-			time: d[0] as Time, // ensure seconds, not ms
-			open: d[1],
-			high: d[2],
-			low: d[3],
-			close: d[4]
-		}))
+		.map(normalizeRow)
 		.filter(
 			(item, index, arr) =>
+				// drop rows with invalid numeric OHLC values
 				index === 0 || item.time !== arr[index - 1].time
+		)
+		.filter(
+			item =>
+				Number.isFinite(item.open) &&
+				Number.isFinite(item.high) &&
+				Number.isFinite(item.low) &&
+				Number.isFinite(item.close)
 		);
 }
 

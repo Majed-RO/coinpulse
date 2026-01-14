@@ -1,11 +1,17 @@
 'use client';
+
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import CommandDialogModal from './SearchModal';
+// import { CommandDialogModal } from './SearchModal';
+// import SearchTrigger from './SearchTrigger';
 
 const Header = () => {
 	const pathName = usePathname();
+	// const [isModalOpen, setIsModalOpen] = useState(false);
+
 	return (
 		<header>
 			<div className="main-container inner">
@@ -31,7 +37,25 @@ const Header = () => {
 						Home
 					</Link>
 
-					<p>Search Modal</p>
+					<div>
+            <CommandDialogModal />
+						{/* The Search UI */}
+						{/* <SearchTrigger
+							onClick={() =>
+								setIsModalOpen(
+									true
+								)
+							}
+						/> */}
+
+						{/* The Modal (Logic handles Ctrl+K inside) */}
+						{/* <CommandModal
+							isOpen={isModalOpen}
+							setIsOpen={
+								setIsModalOpen
+							}
+						/> */}
+					</div>
 
 					<Link
 						href={'/coins'}

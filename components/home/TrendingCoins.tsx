@@ -12,6 +12,7 @@ const TrendingCoins = async () => {
 		300
 	);
 
+
 	const columns: DataTableColumn<TrendingCoin>[] = [
 		{
 			header: 'Name',
